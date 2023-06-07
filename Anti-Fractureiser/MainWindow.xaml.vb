@@ -4,7 +4,7 @@ Imports Microsoft.Win32
 Class MainWindow
 
 
-    Dim AppDataPath As String = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
+    Dim AppDataPath As String = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
     Dim edgePath As String = AppDataPath & "\Local\Microsoft Edge"
 
     Dim badPaths As String() = {

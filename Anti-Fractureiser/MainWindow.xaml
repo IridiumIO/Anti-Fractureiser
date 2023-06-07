@@ -27,7 +27,7 @@
             
             
             <TextBlock   FontSize="16" Text="Stage 1 + 2" FontWeight="Bold"/>
-            <TextBlock TextWrapping="Wrap" Text="Checks to see if paylaod files have been downloaded and if the program has added itself to the registry or start-up folders in Windows. Optionally, adds a Windows Defender rule to block connections to the known bad remote IP and URL (85.217.144.130 and https://files-8ie.pages.dev)"/>
+            <TextBlock TextWrapping="Wrap" Text="Checks to see if payload files have been downloaded and if the program has added itself to the registry or start-up folders in Windows. Optionally, adds a Windows Defender rule to block connections to the known bad remote IP and URL (85.217.144.130 and https://files-8ie.pages.dev)"/>
             <Button Margin="0,10,0,0" Width="200" Content="1. Run Check" Click="Button_Click"/>
             <Button Margin="0,10,0,0" Width="200" Content="2. Create Defender Rules" Click="Button_Click_1"/>
             
