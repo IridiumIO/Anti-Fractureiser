@@ -16,7 +16,7 @@ Makes use heavily of shared scripts and data from here: https://github.com/fract
 3. Click "Create Defender Rules" to block access from the known malicious IP addresses and URLs as listed below
 4. Head over [here](https://github.com/MCRcortex/nekodetector) and run the detector to find any compromised .jar files on your system. At present you will have to compile this yourself but I'm sure the dev will release an executable progam soon. 
 
-#### Malicious Entries that are searched for:
+#### Malicious Entries that are searched for and deleted:
 
 - `%LocalAppdata%\Microsoft Edge`
     - `\.ref`
