@@ -1,6 +1,9 @@
 ﻿Imports System.Diagnostics
 Imports Microsoft.Win32
 
+
+Imports System.Security.Principal
+
 Class MainWindow
 
 
@@ -15,6 +18,23 @@ Class MainWindow
     edgePath & "\run.bat",
     AppDataPath & "\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\run.bat"
 }
+
+
+    Dim compromisedAddrIPs As String() = {
+            "85.217.144.130",
+            "107.189.3.101",
+            "95.214.27.172",
+            "171.22.30.117"}
+
+
+    Dim compromisedAddressess As String() = {
+            "files-8ie.pages.dev",
+            "connect.skyrage.de",
+            "t23e7v6uz8idz87ehugwq.skyrage.de",
+            "files.skyrage.de",
+            "file.skyrage.de",
+            "qw3e1ee12e9hzheu9h1912hew1sh12uw9.skyrage.de"}
+
 
     Function CheckForAppDataBadActors() As Boolean
 
@@ -88,31 +108,68 @@ Class MainWindow
 
 
 
-
+    Public Function IsRunningAsAdministrator() As Boolean
+        Dim identity As WindowsIdentity = WindowsIdentity.GetCurrent()
+        Dim principal As New WindowsPrincipal(identity)
+        Return principal.IsInRole(WindowsBuiltInRole.Administrator)
+    End Function
 
 
 
 
     Private Sub Button_Click_1(sender As Object, e As RoutedEventArgs)
         ' Create the netsh command to add a firewall rule
-        ConPrint(vbCrLf & "Creating Firewall rules...")
-        Dim command As String = $"advfirewall firewall add rule name=""Block Fractureiser Malware IP"" dir=in action=block remoteip=85.217.144.130"
-        Dim command2 As String = $"advfirewall firewall add rule name=""Block Fractureiser Malware IP"" dir=out action=block remoteip=85.217.144.130"
+
+
+        ConPrint(vbCrLf & "Creating Firewall rules for...")
+        For Each comp In compromisedAddrIPs
+            ConPrint("    " & comp)
+        Next
+
+        Dim allIPs As String = String.Join(",", compromisedAddrIPs)
+        Debug.WriteLine(allIPs)
+        Dim command As String = $"advfirewall firewall add rule name=""Block Fractureiser Malware IP"" dir=in action=block remoteip={allIPs}"
+        Dim command2 As String = $"advfirewall firewall add rule name=""Block Fractureiser Malware IP"" dir=out action=block remoteip={allIPs}"
+
+        DeleteExistingFirewallRule("Block Fractureiser Malware IP")
 
         ' Execute the netsh command
         ExecuteCommand(command)
         ExecuteCommand(command2)
         ConPrint("Firewall Rules Created")
 
-        ConPrint("Adding Hosts Rule...")
-        If AddHostEntry("files-8ie.pages.dev", "0.0.0.0") Then
-            ConPrint("Hosts rule created")
-        Else
+        ConPrint(vbCrLf & "Adding Hosts Rules...")
+
+
+        If Not IsRunningAsAdministrator() Then
+            MsgBox("Cannot write Hosts Rules. Please run this program as an administrator", , "Anti-Fractureiser")
             ConPrint("Failed to write Hosts rule. Are you running as Administrator?")
+            Return
         End If
+
+        For Each addr In compromisedAddressess
+            If Not AddHostEntry(addr, "0.0.0.0") Then
+                ConPrint("Failed to write Hosts rule. Are you running as Administrator?")
+            End If
+
+        Next
+
+
     End Sub
 
+    Private Sub DeleteExistingFirewallRule(ruleName As String)
+        Dim processInfo As New ProcessStartInfo()
+        processInfo.FileName = "netsh"
+        processInfo.Arguments = $"advfirewall firewall delete rule name=""{ruleName}"""
 
+        processInfo.UseShellExecute = True
+        processInfo.CreateNoWindow = True
+        processInfo.Verb = "runas"
+
+
+        Dim process As Process = Process.Start(processInfo)
+        process.WaitForExit()
+    End Sub
 
     Private Sub ExecuteCommand(command As String)
 
@@ -135,16 +192,28 @@ Class MainWindow
 
             ' Check if the hosts file exists
             If IO.File.Exists(hostsFilePath) Then
-                ' Open the hosts file in append mode
-                Using writer As New IO.StreamWriter(hostsFilePath, True)
-                    ' Write the new host entry to the file
-                    writer.WriteLine(ipAddress & " " & hostname)
-                End Using
+                ' Open the hosts file in append mode after checking if the etnry already exists
+                Dim entryToWrite = ipAddress & " " & hostname
+                Dim isEntryPresent = IO.File.ReadLines(hostsFilePath).Any(Function(line) line.Trim() = entryToWrite)
 
-                Console.WriteLine("Host entry added successfully.")
+                If Not isEntryPresent Then
+
+                    Using writer As New IO.StreamWriter(hostsFilePath, True)
+                        ' Write the new host entry to the file
+                        writer.WriteLine(entryToWrite)
+                    End Using
+                    ConPrint("    Host entry added for " & hostname)
+                Else
+                    ConPrint("    Host entry already exists for " & hostname)
+
+                End If
+
+
+
             Else
-                Console.WriteLine("Hosts file not found.")
+                ConPrint("Hosts file not found.")
             End If
+            Threading.Thread.Sleep(200)
             Return True
         Catch ex As Exception
             ' Handle any exceptions that occur during the process
